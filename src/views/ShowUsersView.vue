@@ -1,44 +1,56 @@
 <script setup>
 import { onMounted, ref } from "vue";
+import { useRouter } from "vue-router";
 import axios from "axios";
-import { convertToBuddhistEra } from "../util/helpers.js";
+import Swal from "sweetalert2";
 
+const router = useRouter();
 const url = import.meta.env.VITE_API_BASE_URL;
 
 const users = ref([]);
-const currentPage = ref(1);
-const pageSize = ref(5);
-const totalPages = ref(0);
-// `${url}user?page=${page}&limit=${pageSize.value}`
-const getUsers = async (page = 1) => {
+const getUsers = async () => {
+  Swal.fire({
+    title: "กำลังโหลด...",
+    allowOutsideClick: false,
+    didOpen: () => {
+      Swal.showLoading();
+    },
+  });
+
   try {
-    const { data } = await axios.get(
-      `${url}user`
-    );
-    if (data.rows) {
-      users.value = data.users;
-      totalPages.value = Math.ceil(data.rows / pageSize.value);
-      return;
+    const { data } = await axios.get(`${url}user/`);
+    if (data.Data && data.Data.Rows) {
+      users.value = data.Data.Users;
+      Swal.close();
+    } else {
+      users.value = [];
+      Swal.close();
     }
-    users.value = [];
   } catch (err) {
-    console.error("Error fetching users:", err);
+    Swal.fire({
+      icon: "error",
+      title: "เกิดข้อผิดพลาด",
+      text: "ไม่สามารถโหลดข้อมูลผู้ใช้",
+    });
+  }
+};
+
+const btnAction = (actionObj) => {
+  if (actionObj.type == "roles-setting") {
+    router.push({
+      path: "/roles-setting",
+      query: {
+        userId: actionObj.userId,
+      },
+    });
+    console.log(`actionObj`, actionObj);
+    return;
   }
 };
 
 onMounted(() => {
-
-  getUsers(currentPage.value);
-
-//   setInterval(() => {
-//     getUsers(currentPage.value);
-//   }, 5000);
+  getUsers();
 });
-
-const changePage = (page) => {
-  currentPage.value = page;
-  getUsers(page);
-};
 </script>
 
 <template>
@@ -59,52 +71,57 @@ const changePage = (page) => {
           </tr>
         </thead>
         <tbody>
-          <tr v-for="(user, index) in users" :key="user.id">
+          <tr v-for="(user, index) in users" :key="user.Id">
             <td>{{ index + 1 }}</td>
             <td>
               <img
-                :src="user.profile"
+                :src="user.Profile"
                 class="responsive-img"
-                :alt="user.profile"
+                :alt="user.Profile"
               />
             </td>
-            <td>{{ user.username }}</td>
-            <td>{{ user.email }}</td>
-            <td>{{ convertToBuddhistEra(user.created_at) }}</td>
-            <td></td>
+            <td>{{ user.Username }}</td>
+            <td>{{ user.Email }}</td>
+            <td>{{ user.CreatedAt }}</td>
+            <td>
+              <div
+                class="btn-group"
+                role="group"
+                aria-label="Basic outlined example"
+              >
+                <button
+                  type="button"
+                  class="btn btn-outline-primary"
+                  :id="user.Id"
+                  @click.prevent="
+                    btnAction({ userId: user.Id, type: 'roles-setting' })
+                  "
+                >
+                  ตั้งค่าสิทธิ์
+                </button>
+                <button
+                  type="button"
+                  class="btn btn-outline-primary"
+                  :id="user.Id"
+                  @click.prevent="btnAction({ userId: user.Id, type: 'edit' })"
+                >
+                  เเก้ไข
+                </button>
+                <button
+                  type="button"
+                  class="btn btn-outline-primary"
+                  :id="user.Id"
+                  @click.prevent="
+                    btnAction({ userId: user.Id, type: 'delete' })
+                  "
+                >
+                  ลบ
+                </button>
+              </div>
+            </td>
           </tr>
         </tbody>
       </table>
-    </div>
-    <div class="user-paginat">
-      <nav aria-label="Page navigation example">
-        <ul class="pagination justify-content-end">
-          <li class="page-item" :class="{ disabled: currentPage === 1 }">
-            <a
-              class="page-link"
-              href="#"
-              @click.prevent="changePage(currentPage - 1)"
-              >Previous</a
-            >
-          </li>
-          <li class="page-item" v-for="page in totalPages" :key="page">
-            <a class="page-link" href="#" @click.prevent="changePage(page)">{{
-              page
-            }}</a>
-          </li>
-          <li
-            class="page-item"
-            :class="{ disabled: currentPage === totalPages }"
-          >
-            <a
-              class="page-link"
-              href="#"
-              @click.prevent="changePage(currentPage + 1)"
-              >Next</a
-            >
-          </li>
-        </ul>
-      </nav>
     </div>
   </div>
 </template>
@@ -130,10 +147,25 @@ const changePage = (page) => {
 }
 
 #users-table th {
-    padding-top: 8px;
-    padding-bottom: 8px;
-    background-color: rgb(45, 89, 104);
-    color: white;
-    font-size: 0.9em;
-  }
+  padding-top: 8px;
+  padding-bottom: 8px;
+  background-color: #34495e;
+  color: white;
+  font-size: 0.9em;
+}
+
+.button {
+  background-color: #04aa6d; /* Green */
+  border: none;
+  color: white;
+  padding: 15px 32px;
+  text-align: center;
+  text-decoration: none;
+  display: inline-block;
+  font-size: 16px;
+  margin: 4px 2px;
+  cursor: pointer;
+  -webkit-transition-duration: 0.4s; /* Safari */
+  transition-duration: 0.4s;
+}
 </style>
