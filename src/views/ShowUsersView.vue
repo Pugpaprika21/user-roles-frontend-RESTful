@@ -3,12 +3,13 @@ import { onMounted, ref } from "vue";
 import { useRouter } from "vue-router";
 import axios from "axios";
 import Swal from "sweetalert2";
+import BtnOnAction from "../components/BtnOnAction.vue";
 
 const router = useRouter();
 const url = import.meta.env.VITE_API_BASE_URL;
 
 const users = ref([]);
-const getUsers = async () => {
+const onGetUsers = async () => {
   Swal.fire({
     title: "กำลังโหลด...",
     allowOutsideClick: false,
@@ -35,21 +36,8 @@ const getUsers = async () => {
   }
 };
 
-const btnAction = (actionObj) => {
-  if (actionObj.type == "roles-setting") {
-    router.push({
-      path: "/roles-setting",
-      query: {
-        userId: actionObj.userId,
-      },
-    });
-    console.log(`actionObj`, actionObj);
-    return;
-  }
-};
-
 onMounted(() => {
-  getUsers();
+  onGetUsers();
 });
 </script>
 
@@ -84,40 +72,8 @@ onMounted(() => {
             <td>{{ user.Email }}</td>
             <td>{{ user.CreatedAt }}</td>
             <td>
-              <div
-                class="btn-group"
-                role="group"
-                aria-label="Basic outlined example"
-              >
-                <button
-                  type="button"
-                  class="btn btn-outline-primary"
-                  :id="user.Id"
-                  @click.prevent="
-                    btnAction({ userId: user.Id, type: 'roles-setting' })
-                  "
-                >
-                  ตั้งค่าสิทธิ์
-                </button>
-                <button
-                  type="button"
-                  class="btn btn-outline-primary"
-                  :id="user.Id"
-                  @click.prevent="btnAction({ userId: user.Id, type: 'edit' })"
-                >
-                  เเก้ไข
-                </button>
-                <button
-                  type="button"
-                  class="btn btn-outline-primary"
-                  :id="user.Id"
-                  @click.prevent="
-                    btnAction({ userId: user.Id, type: 'delete' })
-                  "
-                >
-                  ลบ
-                </button>
-              </div>
+             <BtnOnAction :userId="user.Id">
+             </BtnOnAction>
             </td>
           </tr>
         </tbody>
